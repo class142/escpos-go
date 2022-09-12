@@ -33,16 +33,25 @@ var textReplaceMap = map[string]string{
 	"&gt;":   ">",
 	"&lt;":   "<",
 
-	//https://en.wikipedia.org/wiki/Code_page_858
-	"ä": "\x84",
-	"ö": "\x94",
-	"ü": "\x81",
-	"Ä": "\x8e",
-	"Ö": "\x99",
-	"Ü": "\x9a",
-	"ß": "\xe1",
-	"´": "'",
-	"`": "'",
+	//https://de.wikipedia.org/wiki/Codepage_850
+	//https://de.wikipedia.org/wiki/Codepage_437
+	"ä":  "\x84",
+	"ö":  "\x94",
+	"ü":  "\x81",
+	"Ä":  "\x8e",
+	"Ö":  "\x99",
+	"Ü":  "\x9a",
+	"ß":  "\xe1",
+	"´":  "'",
+	"`":  "'",
+	"\"": "'",
+	"’":  "'",
+	"–":  "\x2d", //long -
+
+	// quotes
+	"&#x201C;": "'",
+	"&#x201D;": "'",
+	"&#x201E;": "'",
 
 	// ampersand must be last to avoid double decoding
 	"&amp;": "&",
