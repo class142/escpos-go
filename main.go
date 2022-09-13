@@ -14,6 +14,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type jokeAPI struct {
@@ -31,12 +33,17 @@ func main() {
 		os.Exit(0)
 	}
 
+	toggleLed(true, false)
+
 	for {
 		cmd := exec.Command("/bin/get-input", "1")
 		stdout, _ := cmd.Output()
 		if !strings.Contains(string(stdout), "HIGH") {
 			continue
 		}
+
+		stopBlinking := make(chan bool)
+		go blinkLed(stopBlinking)
 
 		joke := ""
 
@@ -95,9 +102,32 @@ func main() {
 
 		w.Flush()
 		socket.Close()
+		stopBlinking <- true
 	}
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
 	return net.DialTimeout(network, addr, time.Duration(3*time.Second))
+}
+
+func toggleLed(state bool, wait bool) {
+	cmd := exec.Command("/bin/set-output", "-o", "3.1", "-s", lo.Ternary(state, "close", "open"))
+	if wait {
+		cmd.Run()
+	} else {
+		cmd.Start()
+	}
+}
+
+func blinkLed(stopBlinking chan bool) {
+	for {
+		select {
+		case <-stopBlinking:
+			toggleLed(true, false)
+			return
+		default:
+			toggleLed(false, true)
+			toggleLed(true, true)
+		}
+	}
 }
