@@ -27,6 +27,8 @@ type jokeJSON struct {
 	Jokes []string `json:"jokes"`
 }
 
+const charsPerLine int = 44
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Printf("First argument should backup joke json file path")
@@ -95,7 +97,7 @@ func main() {
 		p := escpos.New(w)
 
 		p.Init()
-		p.WriteCP858(joke)
+		p.WriteCP858(formatText(joke, charsPerLine))
 		p.FormfeedD(2)
 
 		p.Cut()
@@ -104,6 +106,20 @@ func main() {
 		socket.Close()
 		stopBlinking <- true
 	}
+}
+
+func formatText(text string, charsPerLine int) string {
+	result := ""
+	currentLine := ""
+	for _, word := range strings.Split(text, " ") {
+		if (len(word) + len(currentLine)) > charsPerLine {
+			result += currentLine + "\n"
+			currentLine = ""
+		}
+		currentLine += word + " "
+	}
+	result += currentLine
+	return result
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
