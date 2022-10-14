@@ -2,26 +2,27 @@ package main
 
 import (
 	"bufio"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	escpos "go-escpos/utils"
 	"io/ioutil"
 	"math/rand"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	jokeapi "go-escpos/utils"
+
 	"github.com/samber/lo"
+	"github.com/tarm/serial"
 )
 
-type jokeAPI struct {
+/* type jokeAPI struct {
 	Text     string
 	Language string
-}
+}*/
 
 type jokeJSON struct {
 	Jokes []string `json:"jokes"`
@@ -35,7 +36,29 @@ func main() {
 		os.Exit(0)
 	}
 
-	toggleLed(true, false)
+	stopBlinking := make(chan bool)
+	go blinkLed(stopBlinking)
+
+	config := &serial.Config{
+		Name:        "/devices/2_serial1",
+		Baud:        9600,
+		ReadTimeout: 1,
+		Size:        8,
+	}
+
+	stream, err := serial.OpenPort(config)
+
+	if err != nil {
+		println(err.Error())
+	}
+
+	w := bufio.NewWriter(stream)
+	p := escpos.New(w)
+
+	api := jokeapi.Init()
+	api.Set(jokeapi.Params{JokeType: "single"})
+
+	stopBlinking <- true
 
 	for {
 		cmd := exec.Command("/bin/get-input", "1")
@@ -49,7 +72,7 @@ func main() {
 
 		joke := ""
 
-		transport := http.Transport{
+		/* transport := http.Transport{
 			Dial: dialTimeout,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -60,9 +83,13 @@ func main() {
 			Transport: &transport,
 		}
 
-		response, err := client.Get("https://witzapi.de/api/joke")
+		response, err := client.Get("https://witzapi.de/api/joke") */
+
+		response, err := api.Fetch()
+
 		if err != nil {
 			//use local jokes file if network error occured
+
 			jsonFile, err := os.Open(os.Args[1])
 			if err != nil {
 				joke = "Lieber Benutzer,\n irgendwie komme ich nicht an die interne Witze-Datei.\n MfG Dein ECR"
@@ -80,21 +107,10 @@ func main() {
 				}
 			}
 		} else {
-			responseData, _ := ioutil.ReadAll(response.Body)
-			var jokes []jokeAPI
-			json.Unmarshal(responseData, &jokes)
-			joke = jokes[0].Text
+			joke = response.Joke[0]
 		}
 
-		fmt.Printf("Printing joke: %v", joke)
-
-		socket, err := net.Dial("tcp", "192.168.1.1:232")
-		if err != nil {
-			println(err.Error())
-		}
-
-		w := bufio.NewWriter(socket)
-		p := escpos.New(w)
+		fmt.Printf("Printing joke: %v \n", joke)
 
 		p.Init()
 		p.WriteCP858(formatText(joke, charsPerLine))
@@ -103,7 +119,7 @@ func main() {
 		p.Cut()
 
 		w.Flush()
-		socket.Close()
+		//stream.Close()
 		stopBlinking <- true
 	}
 }
