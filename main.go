@@ -31,6 +31,54 @@ type jokeJSON struct {
 const charsPerLine int = 44
 
 func main() {
+
+	socket, err := net.Dial("tcp", "192.168.202.160:232")
+	/* lizard := "" +
+	"                       )/_       " +
+	"             _.--..---''-,--c_    " +
+	"        \\L..'           ._O__)_  " +
+	",-.     _.+  _  \\..--( /         " +
+	"  `\\.-''__.-' \\ (     \\_         " +
+	"    `'''       `\\__   /\\         " +
+	"                ')                "*/
+
+	sudoku := "" +
+		"╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n" +
+		"║ 8 │ 5 │   ║   │   │ 2 ║ 4 │   │   ║\n" +
+		"╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n" +
+		"║ 7 │ 2 │   ║   │   │   ║   │   │ 9 ║\n" +
+		"╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n" +
+		"║   │   │ 4 ║   │   │   ║   │   │   ║\n" +
+		"╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n" +
+		"║   │   │   ║ 1 │   │ 7 ║   │   │ 2 ║\n" +
+		"╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n" +
+		"║ 3 │   │ 5 ║   │   │   ║ 9 │   │   ║\n" +
+		"╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n" +
+		"║   │ 4 │   ║   │   │   ║   │   │   ║\n" +
+		"╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n" +
+		"║   │   │   ║   │ 8 │   ║   │ 7 │   ║\n" +
+		"╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n" +
+		"║   │ 1 │ 7 ║   │   │   ║   │   │   ║\n" +
+		"╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n" +
+		"║   │   │   ║   │ 3 │ 6 ║   │ 4 │   ║\n" +
+		"╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n"
+	if err != nil {
+		println(err.Error())
+	}
+
+	w1 := bufio.NewWriter(socket)
+	p1 := escpos.New(w1)
+
+	p1.Init()
+	p1.WriteCP858(sudoku)
+	p1.FormfeedD(2)
+
+	p1.Cut()
+
+	w1.Flush()
+
+	return
+
 	if len(os.Args) < 2 {
 		fmt.Printf("First argument should backup joke json file path")
 		os.Exit(0)
@@ -48,12 +96,12 @@ func main() {
 
 	stream, err := serial.OpenPort(config)
 
+	w := bufio.NewWriter(stream)
+	p := escpos.New(w)
+
 	if err != nil {
 		println(err.Error())
 	}
-
-	w := bufio.NewWriter(stream)
-	p := escpos.New(w)
 
 	api := jokeapi.Init()
 	api.Set(jokeapi.Params{JokeType: "single"})
